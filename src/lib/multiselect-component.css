@@ -1,0 +1,102 @@
+/* ============================================================================
+   Multiselect Component — специфичные стили
+   ============================================================================ */
+
+/* Обёртка Multiselect — flex-wrap для тегов */
+.stk-multiselect-wrapper {
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 4px 4px 4px 8px;
+}
+
+.stk-multiselect-wrapper .stk-dropdown-input {
+	flex: 1 1 60px;
+	min-width: 60px;
+	padding: 4px;
+}
+
+/* ============================================================================
+   Tags
+   ============================================================================ */
+.stk-multiselect-tags {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	align-items: center;
+}
+
+.stk-multiselect-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	max-width: 150px;
+	padding: 2px 4px 2px 8px;
+	background: var(--stk-dropdown-tag-bg);
+	color: var(--stk-dropdown-tag-color);
+	border-radius: 4px;
+	font-size: 12px;
+	line-height: 1.4;
+	white-space: nowrap;
+}
+
+.stk-multiselect-tag__text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.stk-multiselect-tag__remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--stk-dropdown-tag-color);
+	cursor: pointer;
+	font-size: 14px;
+	line-height: 1;
+	border-radius: 2px;
+	transition: color var(--stk-dropdown-transition-duration) ease,
+		background-color var(--stk-dropdown-transition-duration) ease;
+}
+
+.stk-multiselect-tag__remove:hover {
+	color: var(--stk-dropdown-tag-remove-hover);
+	background: rgba(30, 64, 175, 0.1);
+}
+
+/* ============================================================================
+   List Items — чекбоксы
+   ============================================================================ */
+.stk-multiselect-list .stk-dropdown-item {
+	gap: 8px;
+}
+
+.stk-multiselect-list .stk-dropdown-item input[type='checkbox'] {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	cursor: pointer;
+	accent-color: var(--stk-dropdown-border-focus);
+	pointer-events: none; /* клик через li */
+}
+
+.stk-multiselect-list .stk-dropdown-item span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ============================================================================
+   "Выбрать все" — разделитель
+   ============================================================================ */
+.stk-multiselect-item_select-all {
+	border-bottom: 1px solid var(--stk-dropdown-border);
+	font-weight: 500;
+}
+

@@ -1,12 +1,195 @@
-.dropdown-portal {
+/* ============================================================================
+   CSS Custom Properties — кастомизация
+   ============================================================================ */
+:root {
+	--stk-dropdown-bg: #fff;
+	--stk-dropdown-color: #1f2937;
+	--stk-dropdown-border: #d1d5db;
+	--stk-dropdown-border-focus: #3b82f6;
+	--stk-dropdown-border-radius: 6px;
+	--stk-dropdown-font-size: 14px;
+	--stk-dropdown-item-hover: #f3f4f6;
+	--stk-dropdown-item-selected: #eff6ff;
+	--stk-dropdown-item-selected-color: #1d4ed8;
+	--stk-dropdown-item-focused: #e0e7ff;
+	--stk-dropdown-item-disabled-color: #9ca3af;
+	--stk-dropdown-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+	--stk-dropdown-popover-max-height: 256px;
+	--stk-dropdown-tag-bg: #dbeafe;
+	--stk-dropdown-tag-color: #1e40af;
+	--stk-dropdown-tag-remove-hover: #1e3a8a;
+	--stk-dropdown-transition-duration: 150ms;
 }
 
-.dropdown-popover-wrapper {
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-	border-radius: 10px;
-	border: 1px solid rgba(0, 0, 0, 0.1);
-	background: #fff;
-	padding: 10px;
-	width: 200px;
-	height: 400px;
+/* ============================================================================
+   Portal
+   ============================================================================ */
+.stk-dropdown-portal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 9999;
+	pointer-events: none;
+}
+
+.stk-dropdown-portal > * {
+	pointer-events: auto;
+}
+
+/* ============================================================================
+   Wrapper
+   ============================================================================ */
+.stk-dropdown-wrapper {
+	display: inline-flex;
+	align-items: center;
+	position: relative;
+	box-sizing: border-box;
+	border: 1px solid var(--stk-dropdown-border);
+	border-radius: var(--stk-dropdown-border-radius);
+	background: var(--stk-dropdown-bg);
+	font-size: var(--stk-dropdown-font-size);
+	transition: border-color var(--stk-dropdown-transition-duration) ease;
+	cursor: pointer;
+}
+
+.stk-dropdown-wrapper:hover {
+	border-color: var(--stk-dropdown-border-focus);
+}
+
+.stk-dropdown-wrapper_opened {
+	border-color: var(--stk-dropdown-border-focus);
+	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.stk-dropdown-wrapper_disabled {
+	opacity: 0.5;
+	pointer-events: none;
+	cursor: default;
+}
+
+/* ============================================================================
+   Input
+   ============================================================================ */
+.stk-dropdown-input {
+	flex: 1;
+	min-width: 0;
+	border: none;
+	outline: none;
+	background: transparent;
+	font: inherit;
+	color: var(--stk-dropdown-color);
+	padding: 8px 12px;
+	box-sizing: border-box;
+}
+
+.stk-dropdown-input::placeholder {
+	color: var(--stk-dropdown-item-disabled-color);
+}
+
+/* ============================================================================
+   Arrow button
+   ============================================================================ */
+.stk-dropdown-arrow {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 32px;
+	height: 100%;
+	border: none;
+	background: transparent;
+	color: var(--stk-dropdown-color);
+	cursor: pointer;
+	padding: 0;
+	transition: transform var(--stk-dropdown-transition-duration) ease;
+}
+
+.stk-dropdown-arrow:hover {
+	color: var(--stk-dropdown-border-focus);
+}
+
+.stk-dropdown-arrow_opened {
+	transform: rotate(180deg);
+}
+
+/* ============================================================================
+   Popover
+   ============================================================================ */
+.stk-dropdown-popover {
+	box-sizing: border-box;
+	display: none;
+	background: var(--stk-dropdown-bg);
+	border: 1px solid var(--stk-dropdown-border);
+	border-radius: var(--stk-dropdown-border-radius);
+	box-shadow: var(--stk-dropdown-shadow);
+	overflow: hidden;
+	z-index: 10000;
+}
+
+/* ============================================================================
+   List
+   ============================================================================ */
+.stk-dropdown-list {
+	list-style: none;
+	margin: 0;
+	padding: 4px 0;
+	max-height: var(--stk-dropdown-popover-max-height);
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.stk-dropdown-list::-webkit-scrollbar {
+	width: 6px;
+}
+
+.stk-dropdown-list::-webkit-scrollbar-thumb {
+	background: var(--stk-dropdown-border);
+	border-radius: 3px;
+}
+
+/* ============================================================================
+   List Item
+   ============================================================================ */
+.stk-dropdown-item {
+	display: flex;
+	align-items: center;
+	padding: 8px 12px;
+	cursor: pointer;
+	color: var(--stk-dropdown-color);
+	font-size: var(--stk-dropdown-font-size);
+	transition: background-color var(--stk-dropdown-transition-duration) ease;
+	user-select: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.stk-dropdown-item:hover {
+	background: var(--stk-dropdown-item-hover);
+}
+
+.stk-dropdown-item_focused {
+	background: var(--stk-dropdown-item-focused);
+}
+
+.stk-dropdown-item_selected {
+	background: var(--stk-dropdown-item-selected);
+	color: var(--stk-dropdown-item-selected-color);
+	font-weight: 500;
+}
+
+.stk-dropdown-item_disabled {
+	color: var(--stk-dropdown-item-disabled-color);
+	cursor: default;
+	pointer-events: none;
+}
+
+/* ============================================================================
+   No Results
+   ============================================================================ */
+.stk-dropdown-no-results {
+	padding: 12px;
+	text-align: center;
+	color: var(--stk-dropdown-item-disabled-color);
+	font-size: var(--stk-dropdown-font-size);
 }
