@@ -1,12 +1,12 @@
 import './combobox-component.css';
-import { BaseComponent } from './base-component.ts';
+import { BaseComponent } from './base-component';
 import type {
 	ComboboxComponentProps,
 	ComboboxEvents,
 	ComboboxState,
 	DropdownItem,
 	FilterStrategy,
-} from './types.ts';
+} from './types';
 
 /**
  * ComboboxComponent — компонент с текстовым вводом и фильтрацией списка.
@@ -74,10 +74,6 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 		this._setupComboboxKeyboard();
 	}
 
-	// ========================================================================
-	// Публичные методы
-	// ========================================================================
-
 	/**
 	 * Геттер/сеттер текущего выбранного значения.
 	 * - Без аргументов: возвращает выбранный элемент или null.
@@ -110,9 +106,9 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 		this._stateManager.set('filteredItems', this._applyFilter(items, filterText));
 
 		const currentSelected = this._stateManager.get('selectedItem');
-		if (currentSelected && !items.some((i) => i.value === currentSelected.value)) {
+		if (currentSelected && !items.some(x => x.value === currentSelected.value)) {
 			this._stateManager.set('selectedItem', null);
-			this._rootElement.value = '';
+			this.root.value = '';
 		}
 	}
 
@@ -120,10 +116,6 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 	public filter(text: string): void {
 		this._stateManager.set('filterText', text);
 	}
-
-	// ========================================================================
-	// Реализация абстрактного метода
-	// ========================================================================
 
 	/** Рендер списка (отфильтрованных) элементов внутри попапа */
 	protected _renderItems(): void {
@@ -161,10 +153,6 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 			this._listElement.appendChild(li);
 		});
 	}
-
-	// ========================================================================
-	// Приватные методы
-	// ========================================================================
 
 	/** Инициализация списка */
 	private _initList(): void {
@@ -239,10 +227,13 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 				clearTimeout(this._debounceTimer);
 			}
 
-			this._debounceTimer = setTimeout(() => {
-				this._stateManager.set('filterText', this._rootElement.value);
-				this._debounceTimer = null;
-			}, this._debounceMs);
+			this._debounceTimer = setTimeout(
+				() => {
+					this._stateManager.set('filterText', this._rootElement.value);
+					this._debounceTimer = null;
+				},
+				this._debounceMs
+			);
 
 			// Открыть попап при вводе, если закрыт
 			if (!this._stateManager.get('opened')) {
@@ -253,7 +244,7 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 
 	/** Настроить keyboard-навигацию для Combobox */
 	private _setupComboboxKeyboard(): void {
-		this._rootElement.addEventListener('keydown', (event) => {
+		this.root.addEventListener('keydown', (event) => {
 			const filteredItems = this._stateManager.get('filteredItems');
 			if (filteredItems.length === 0) return;
 
