@@ -41,6 +41,7 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 		const {
 			selector,
 			items,
+			dataSource,
 			placeholder,
 			values,
 			showSelectAll,
@@ -48,22 +49,28 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 			tagMode
 		} = props;
 
+		if (items && dataSource) {
+			throw new Error('[MultiselectComponent]: передайте items ИЛИ dataSource, но не оба');
+		}
+
+		const initialItems = items ?? [];
+
 		// Определить начально выбранные элементы
 		const initialSelected = values
-			? items.filter((item) => values.includes(item.value))
+			? initialItems.filter((item) => values.includes(item.value))
 			: [];
 
-		const allSelected = initialSelected.length === items.length && items.length > 0;
+		const allSelected = initialSelected.length === initialItems.length && initialItems.length > 0;
 
 		super({
 			selector,
 			state: {
 				opened: false,
 				disabled: false,
-				dataItems: [...items],
+				dataItems: [...initialItems],
 				selectedItems: initialSelected,
 				filterText: '',
-				filteredItems: [...items],
+				filteredItems: [...initialItems],
 				allSelected,
 				focusedIndex: -1
 			}
@@ -78,13 +85,18 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 		}
 
 		this._initMultiselectDOM();
-		this._initList();
+		this._setupListListeners();
 		this._setupMultiselectSubscriptions();
 		this._setupMultiselectInput();
 		this._setupMultiselectKeyboard();
 
 		// Первый рендер тегов
 		this._renderTags();
+
+		// Инициализация DataSource (если передан)
+		if (dataSource) {
+			this._initDataSource(dataSource);
+		}
 	}
 
 	/**
@@ -165,10 +177,6 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 			selectAllLi.dataset.value = String(SELECT_ALL_VALUE);
 			selectAllLi.dataset.index = String(-1);
 
-			if (focusedIndex === -1 && this._stateManager.get('opened')) {
-				// "Все" не получает фокус по умолчанию, только при навигации
-			}
-
 			const checkbox = document.createElement('input');
 			checkbox.type = 'checkbox';
 			checkbox.checked = allSelected;
@@ -222,6 +230,16 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 		});
 	}
 
+	/** Hook: монтировать список при открытии попапа */
+	protected override _onPopoverOpen(): void {
+		this._mountList();
+	}
+
+	/** Hook: демонтировать список при закрытии попапа */
+	protected override _onPopoverClose(): void {
+		this._unmountList();
+	}
+
 	/** Инициализация специфичной DOM-структуры для multiselect */
 	private _initMultiselectDOM(): void {
 		this.wrapper.classList.add('stk-multiselect-wrapper');
@@ -231,40 +249,49 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 		this.wrapper.insertBefore(this._tagsContainer, this.root);
 	}
 
-	/** Инициализация списка */
-	private _initList(): void {
+	/** Настроить делегирование кликов (один раз, на popoverWrapper) */
+	private _setupListListeners(): void {
 		this._listElement.className = 'stk-dropdown-list stk-multiselect-list';
-		this.popoverWrapper.appendChild(this._listElement);
 
-		// Делегирование кликов
-		this._listElement.addEventListener('mousedown', (event) => {
+		// Делегирование на popoverWrapper — стабильный элемент
+		this.popoverWrapper.addEventListener('mousedown', (event) => {
 			event.preventDefault();
 
 			const target = (event.target as HTMLElement).closest<HTMLElement>('.stk-dropdown-item');
+			if (!target) return;
 
-			if (target?.classList.contains('stk-dropdown-item_disabled')) {
-				const value = target.dataset.value;
-				if (value === undefined) {
-					return;
-				}
+			const value = target.dataset.value;
+			if (value === undefined) return;
 
-				// "Выбрать все"
-				if (Number(value) === SELECT_ALL_VALUE) {
-					this._toggleSelectAll();
-					return;
-				}
+			// "Выбрать все"
+			if (Number(value) === SELECT_ALL_VALUE) {
+				this._toggleSelectAll();
+				return;
+			}
 
-				const index = Number(target.dataset.index);
-				const filteredItems = this._stateManager.get('filteredItems');
-				const item = filteredItems[index];
+			if (target.classList.contains('stk-dropdown-item_disabled')) return;
 
-				if (item) {
-					this._toggleItem(item);
-				}
+			const index = Number(target.dataset.index);
+			const filteredItems = this._stateManager.get('filteredItems');
+			const item = filteredItems[index];
+
+			if (item) {
+				this._toggleItem(item);
 			}
 		});
+	}
 
+	/** Вставить список в DOM и отрендерить */
+	private _mountList(): void {
+		this.popoverWrapper.appendChild(this._listElement);
 		this._renderItems();
+		this._scrollToFocusedItem();
+	}
+
+	/** Удалить список из DOM и очистить содержимое */
+	private _unmountList(): void {
+		this._listElement.innerHTML = '';
+		this._listElement.remove();
 	}
 
 	/** Подписки на состояние, специфичные для Multiselect */
@@ -276,27 +303,35 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 			this._stateManager.set('focusedIndex', -1);
 		});
 
-		// filteredItems → перерендер
+		// filteredItems → перерендер (только если попап открыт)
 		this._stateManager.subscribe('filteredItems', () => {
-			this._renderItems();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+			}
 		});
 
 		// selectedItems → перерендер тегов и списка
 		this._stateManager.subscribe('selectedItems', () => {
 			this._renderTags();
-			this._renderItems();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+			}
 			this._updateAllSelectedState();
 		});
 
-		// allSelected → перерендер
+		// allSelected → перерендер (только если попап открыт)
 		this._stateManager.subscribe('allSelected', () => {
-			this._renderItems();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+			}
 		});
 
-		// focusedIndex → перерендер + скролл
+		// focusedIndex → перерендер + скролл (только если попап открыт)
 		this._stateManager.subscribe('focusedIndex', () => {
-			this._renderItems();
-			this._scrollToFocusedItem();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+				this._scrollToFocusedItem();
+			}
 		});
 
 		// dataItems → перефильтровать
@@ -354,9 +389,7 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 						this.open();
 						return;
 					}
-					if (filteredItems.length === 0) {
-						return;
-					}
+					if (filteredItems.length === 0) return;
 					const nextIndex = this._findNextEnabledIndex(currentFocusedIndex, 'down', filteredItems);
 					this._stateManager.set('focusedIndex', nextIndex);
 					break;
@@ -367,9 +400,7 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 						this.open();
 						return;
 					}
-					if (filteredItems.length === 0) {
-						return;
-					}
+					if (filteredItems.length === 0) return;
 					const prevIndex = this._findNextEnabledIndex(currentFocusedIndex, 'up', filteredItems);
 					this._stateManager.set('focusedIndex', prevIndex);
 					break;
@@ -397,14 +428,9 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 		let newSelected: DropdownItem[];
 
 		if (isSelected) {
-			// Снять выделение
 			newSelected = selectedItems.filter((i) => i.value !== item.value);
-		}
-		else {
-			// Добавить, если не превышен лимит
-			if (selectedItems.length >= this._maxSelectedItems) {
-				return;
-			}
+		} else {
+			if (selectedItems.length >= this._maxSelectedItems) return;
 			newSelected = [...selectedItems, item];
 		}
 
@@ -417,13 +443,10 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 		const allSelected = this._stateManager.get('allSelected');
 
 		if (allSelected) {
-			// Снять всё
 			this._stateManager.set('selectedItems', []);
 			this._stateManager.set('allSelected', false);
 			this.emit('change', []);
-		}
-		else {
-			// Выбрать все (только enabled)
+		} else {
 			const items = this._stateManager.get('dataItems');
 			const enabledItems = items.filter(x => !x.disabled);
 			this._stateManager.set('selectedItems', enabledItems);
@@ -454,7 +477,6 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 		this._tagsContainer.style.display = 'inline-flex';
 
 		if (this._tagMode === 'single') {
-			// Один суммарный тег
 			const tag = this._createTag(`Выбрано: ${selectedItems.length}`);
 			tag.querySelector('.stk-multiselect-tag__remove')?.addEventListener('mousedown', (event) => {
 				event.preventDefault();
@@ -464,9 +486,7 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 				this.emit('change', []);
 			});
 			this._tagsContainer.appendChild(tag);
-		}
-		else {
-			// Отдельный тег для каждого элемента
+		} else {
 			selectedItems.forEach((item) => {
 				const tag = this._createTag(item.text);
 				tag.querySelector('.stk-multiselect-tag__remove')?.addEventListener('mousedown', (event) => {
@@ -506,7 +526,6 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 			const normalized = filterText.toLowerCase();
 			return items.filter((item) => item.text.toLowerCase().includes(normalized));
 		}
-
 		return [...items];
 	}
 
@@ -520,9 +539,7 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 		let nextIndex = currentIndex + step;
 
 		while (nextIndex >= 0 && nextIndex < items.length) {
-			if (!items[nextIndex].disabled) {
-				return nextIndex;
-			}
+			if (!items[nextIndex].disabled) return nextIndex;
 			nextIndex += step;
 		}
 
@@ -532,11 +549,8 @@ export class MultiselectComponent extends BaseComponent<MultiselectState, Multis
 	/** Прокрутить к элементу с фокусом */
 	private _scrollToFocusedItem(): void {
 		const focusedIndex = this._stateManager.get('focusedIndex');
-		if (focusedIndex < 0) {
-			return;
-		}
+		if (focusedIndex < 0) return;
 
-		// Учитываем "Выбрать все" — он занимает первый child
 		const offset = this._showSelectAll ? 1 : 0;
 		const focusedLi = this._listElement.children[focusedIndex + offset];
 		focusedLi?.scrollIntoView({ block: 'nearest' });

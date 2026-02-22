@@ -81,6 +81,7 @@ describe('ComboboxComponent', () => {
 				items: ITEMS,
 			});
 
+			combobox.open();
 			const listItems = combobox.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			expect(listItems.length).toBe(ITEMS.length);
 		});
@@ -137,6 +138,7 @@ describe('ComboboxComponent', () => {
 				filter: 'contains',
 			});
 
+			combobox.open();
 			combobox.filter('м');
 
 			const listItems = combobox.popoverWrapper.querySelectorAll('.stk-dropdown-item');
@@ -151,6 +153,7 @@ describe('ComboboxComponent', () => {
 				filter: 'startsWith',
 			});
 
+			combobox.open();
 			combobox.filter('м');
 
 			const listItems = combobox.popoverWrapper.querySelectorAll('.stk-dropdown-item');
@@ -165,6 +168,7 @@ describe('ComboboxComponent', () => {
 				filter: 'none',
 			});
 
+			combobox.open();
 			combobox.filter('xyz');
 
 			const listItems = combobox.popoverWrapper.querySelectorAll('.stk-dropdown-item');
@@ -178,6 +182,7 @@ describe('ComboboxComponent', () => {
 				filter: 'contains',
 			});
 
+			combobox.open();
 			combobox.filter('xyzнесуществующий');
 
 			const noResults = combobox.popoverWrapper.querySelector('.stk-dropdown-no-results');
@@ -229,6 +234,7 @@ describe('ComboboxComponent', () => {
 				minFilterLength: 3,
 			});
 
+			combobox.open();
 			combobox.filter('мо'); // 2 символа < 3
 
 			const listItems = combobox.popoverWrapper.querySelectorAll('.stk-dropdown-item');
@@ -247,6 +253,7 @@ describe('ComboboxComponent', () => {
 				filter: 'contains',
 			});
 
+			combobox.open();
 			combobox.filter('аст');
 			const newItems: DropdownItem[] = [
 				{ value: 10, text: 'Астана' },
@@ -289,12 +296,13 @@ describe('ComboboxComponent', () => {
 				filter: 'contains',
 			});
 
-			combobox.filter('мос');
 			combobox.open();
+			combobox.filter('мос');
 			input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
 			input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 
-			// После выбора все items должны быть доступны
+			// После выбора попап закрылся, открываем снова для проверки
+			combobox.open();
 			const listItems = combobox.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			expect(listItems.length).toBe(ITEMS.length);
 		});

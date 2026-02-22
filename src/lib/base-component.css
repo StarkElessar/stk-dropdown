@@ -166,3 +166,30 @@
 	color: var(--stk-dropdown-item-disabled-color);
 	font-size: var(--stk-dropdown-font-size);
 }
+
+.stk-dropdown-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	color: var(--stk-dropdown-item-disabled-color);
+	font-size: var(--stk-dropdown-font-size);
+	gap: 8px;
+
+	&::before {
+		content: "";
+		width: 14px;
+		height: 14px;
+		border: 2px solid var(--stk-dropdown-border);
+		border-top-color: var(--stk-dropdown-border-focus);
+		border-radius: 50%;
+		animation: stk-spin 0.6s linear infinite;
+	}
+}
+
+@keyframes stk-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+

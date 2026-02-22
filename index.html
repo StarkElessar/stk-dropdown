@@ -10,26 +10,68 @@
 			<h1>STK Dropdown Library</h1>
 			<p>Демонстрация компонентов: Dropdown, Combobox, Multiselect</p>
 
+			<!-- ======================================================= -->
+			<!-- Синхронные данные (items)                                -->
+			<!-- ======================================================= -->
+			<h2 class="demo-group-title">Синхронные данные (items)</h2>
+
 			<div class="demo-section">
-				<h2>Dropdown</h2>
+				<h3>Dropdown</h3>
 				<p class="demo-description">Выпадающий список с одиночным выбором. Инпут readonly.</p>
 				<input type="text" id="dropdown" />
 				<div class="demo-output" id="dropdown-output"></div>
 			</div>
 
 			<div class="demo-section">
-				<h2>Combobox</h2>
+				<h3>Combobox</h3>
 				<p class="demo-description">Текстовый ввод с фильтрацией списка. Одиночный выбор.</p>
 				<input type="text" id="combobox" />
 				<div class="demo-output" id="combobox-output"></div>
 			</div>
 
 			<div class="demo-section">
-				<h2>Multiselect</h2>
+				<h3>Multiselect</h3>
 				<p class="demo-description">Множественный выбор с тегами-чипами и чекбоксами.</p>
 				<input type="text" id="multiselect" />
 				<div class="demo-output" id="multiselect-output"></div>
 			</div>
+
+			<!-- ======================================================= -->
+			<!-- Асинхронные данные (dataSource)                         -->
+			<!-- ======================================================= -->
+			<h2 class="demo-group-title">Асинхронные данные (dataSource)</h2>
+
+			<div class="demo-section">
+				<h3>Dropdown — функция-фетчер</h3>
+				<p class="demo-description">
+					Данные загружаются через <code>() => Promise</code> с задержкой 1.5с.
+					Видна анимация загрузки.
+				</p>
+				<input type="text" id="async-dropdown" />
+				<div class="demo-output" id="async-dropdown-output"></div>
+			</div>
+
+			<div class="demo-section">
+				<h3>Combobox — Promise</h3>
+				<p class="demo-description">
+					Данные передаются как готовый <code>Promise</code>.
+					Загружается один раз и кэшируется.
+				</p>
+				<input type="text" id="async-combobox" />
+				<div class="demo-output" id="async-combobox-output"></div>
+			</div>
+
+			<div class="demo-section">
+				<h3>Multiselect — invalidate + reload</h3>
+				<p class="demo-description">
+					DataSource с кнопкой «Обновить данные» — демонстрация
+					<code>invalidate()</code> + повторного <code>fetch(force=true)</code>.
+				</p>
+				<input type="text" id="async-multiselect" />
+				<div class="demo-output" id="async-multiselect-output"></div>
+				<button class="demo-btn" id="async-multiselect-reload">🔄 Обновить данные</button>
+			</div>
 		</div>
+		<script type="module" src="/src/index.ts"></script>
 	</body>
 </html>

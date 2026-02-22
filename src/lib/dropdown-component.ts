@@ -24,10 +24,16 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 	private readonly _listElement = document.createElement('ul');
 
 	constructor(props: DropdownComponentProps) {
-		const { selector, items, placeholder, value } = props;
+		const { selector, items, dataSource, placeholder, value } = props;
+
+		if (items && dataSource) {
+			throw new Error('[DropdownComponent]: передайте items ИЛИ dataSource, но не оба');
+		}
+
+		const initialItems = items ?? [];
 
 		const initialSelected = value != null
-			? items.find((item) => item.value === value) ?? null
+			? initialItems.find((item) => item.value === value) ?? null
 			: null;
 
 		super({
@@ -35,7 +41,7 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 			state: {
 				opened: false,
 				disabled: false,
-				dataItems: [...items],
+				dataItems: [...initialItems],
 				selectedItem: initialSelected,
 				focusedIndex: -1,
 			},
@@ -53,9 +59,14 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 			this._rootElement.value = initialSelected.text;
 		}
 
-		this._initList();
+		this._setupListListeners();
 		this._setupDropdownSubscriptions();
 		this._setupDropdownKeyboard();
+
+		// Инициализация DataSource (если передан)
+		if (dataSource) {
+			this._initDataSource(dataSource);
+		}
 	}
 
 	/**
@@ -122,61 +133,84 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 		});
 	}
 
+	/** Hook: монтировать список при открытии попапа */
+	protected override _onPopoverOpen(): void {
+		this._mountList();
+	}
+
+	/** Hook: демонтировать список при закрытии попапа */
+	protected override _onPopoverClose(): void {
+		this._unmountList();
+	}
+
 	// ========================================================================
 	// Приватные методы
 	// ========================================================================
 
-	/** Инициализация структуры списка */
-	private _initList(): void {
+	/** Настроить делегирование кликов (один раз, на popoverWrapper) */
+	private _setupListListeners(): void {
 		this._listElement.className = 'stk-dropdown-list';
-		this.popoverWrapper.appendChild(this._listElement);
 
-		// Делегирование кликов на элементы списка
-		this._listElement.addEventListener('mousedown', (event) => {
-			// не терять focus с input
+		// Делегирование на popoverWrapper — стабильный элемент, не теряется при mount/unmount
+		this.popoverWrapper.addEventListener('mousedown', (event) => {
 			event.preventDefault();
 
 			const target = (event.target as HTMLElement).closest<HTMLElement>('.stk-dropdown-item');
+			if (!target || target.classList.contains('stk-dropdown-item_disabled')) return;
 
-			if (target?.classList.contains('stk-dropdown-item_disabled')) {
-				const index = Number(target.dataset.index);
-				const items = this._stateManager.get('dataItems');
-				const item = items[index];
+			const index = Number(target.dataset.index);
+			const items = this._stateManager.get('dataItems');
+			const item = items[index];
 
-				if (item) {
-					this._selectItem(item);
-					this.close();
-				}
+			if (item) {
+				this._selectItem(item);
+				this.close();
 			}
 		});
+	}
 
-		// Первый рендер
+	/** Вставить список в DOM и отрендерить */
+	private _mountList(): void {
+		this.popoverWrapper.appendChild(this._listElement);
 		this._renderItems();
+		this._scrollToFocusedItem();
+	}
+
+	/** Удалить список из DOM и очистить содержимое */
+	private _unmountList(): void {
+		this._listElement.innerHTML = '';
+		this._listElement.remove();
 	}
 
 	/** Настроить подписки на состояние, специфичные для Dropdown */
 	private _setupDropdownSubscriptions(): void {
-		// При изменении dataItems → перерендер
+		// При изменении dataItems → перерендер (только если попап открыт)
 		this._stateManager.subscribe('dataItems', () => {
-			this._renderItems();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+			}
 		});
 
 		// При изменении selectedItem → обновить input и перерендер
 		this._stateManager.subscribe('selectedItem', (selectedItem) => {
 			this._rootElement.value = selectedItem?.text ?? '';
-			this._renderItems();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+			}
 		});
 
-		// При изменении focusedIndex → перерендер
+		// При изменении focusedIndex → перерендер (только если попап открыт)
 		this._stateManager.subscribe('focusedIndex', () => {
-			this._renderItems();
-			this._scrollToFocusedItem();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+				this._scrollToFocusedItem();
+			}
 		});
 	}
 
 	/** Настроить keyboard-навигацию, специфичную для Dropdown */
 	private _setupDropdownKeyboard(): void {
-		this._rootElement.addEventListener('keydown', (event) => {
+		this.root.addEventListener('keydown', (event) => {
 			const items = this._stateManager.get('dataItems');
 			const enabledItems = items.filter(x => !x.disabled);
 			if (enabledItems.length === 0) return;
@@ -242,7 +276,7 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 			nextIndex += step;
 		}
 
-		return currentIndex; // не нашли — оставляем как есть
+		return currentIndex;
 	}
 
 	/** Прокрутить список к элементу с фокусом */

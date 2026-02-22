@@ -1,11 +1,14 @@
 export { DropdownComponent } from './dropdown-component';
 export { ComboboxComponent } from './combobox-component';
 export { MultiselectComponent } from './multiselect-component';
+export { DataSource } from './data-source';
 
 export type {
 	DropdownItem,
 	FilterStrategy,
 	TagMode,
+	DataSourceInput,
+	DataSourceEvents,
 	BaseComponentState,
 	DropdownState,
 	ComboboxState,

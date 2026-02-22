@@ -11,6 +11,19 @@ export type FilterStrategy = 'contains' | 'startsWith' | 'none';
 /** Режим отображения тегов в multiselect */
 export type TagMode = 'single' | 'multiple';
 
+/** Варианты входного источника данных */
+export type DataSourceInput<T> =
+	| T[]
+	| Promise<T[]>
+	| (() => Promise<T[]>);
+
+/** События DataSource */
+export type DataSourceEvents<T> = {
+	loading: void;
+	load: T[];
+	error: unknown;
+};
+
 /** Базовое состояние — общее для всех компонентов */
 export type BaseComponentState = {
 	opened: boolean;
@@ -49,7 +62,8 @@ export type BaseComponentProps<TState extends BaseComponentState> = {
 /** Пропсы Dropdown */
 export type DropdownComponentProps = {
 	selector: string | HTMLInputElement;
-	items: DropdownItem[];
+	items?: DropdownItem[];
+	dataSource?: import('./data-source').DataSource<DropdownItem>;
 	placeholder?: string;
 	value?: string | number;
 };
@@ -57,7 +71,8 @@ export type DropdownComponentProps = {
 /** Пропсы Combobox */
 export type ComboboxComponentProps = {
 	selector: string | HTMLInputElement;
-	items: DropdownItem[];
+	items?: DropdownItem[];
+	dataSource?: import('./data-source').DataSource<DropdownItem>;
 	placeholder?: string;
 	value?: string | number;
 	filter?: FilterStrategy;
@@ -68,7 +83,8 @@ export type ComboboxComponentProps = {
 /** Пропсы Multiselect */
 export type MultiselectComponentProps = {
 	selector: string | HTMLInputElement;
-	items: DropdownItem[];
+	items?: DropdownItem[];
+	dataSource?: import('./data-source').DataSource<DropdownItem>;
 	placeholder?: string;
 	values?: (string | number)[];
 	showSelectAll?: boolean;

@@ -36,10 +36,16 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 	private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	constructor(props: ComboboxComponentProps) {
-		const { selector, items, placeholder, value, filter, minFilterLength, debounce } = props;
+		const { selector, items, dataSource, placeholder, value, filter, minFilterLength, debounce } = props;
+
+		if (items && dataSource) {
+			throw new Error('[ComboboxComponent]: передайте items ИЛИ dataSource, но не оба');
+		}
+
+		const initialItems = items ?? [];
 
 		const initialSelected = value != null
-			? items.find((item) => item.value === value) ?? null
+			? initialItems.find((item) => item.value === value) ?? null
 			: null;
 
 		super({
@@ -47,11 +53,11 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 			state: {
 				opened: false,
 				disabled: false,
-				dataItems: [...items],
+				dataItems: [...initialItems],
 				selectedItem: initialSelected,
 				focusedIndex: -1,
 				filterText: '',
-				filteredItems: [...items],
+				filteredItems: [...initialItems],
 			},
 		});
 
@@ -68,10 +74,15 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 			this._rootElement.value = initialSelected.text;
 		}
 
-		this._initList();
+		this._setupListListeners();
 		this._setupComboboxSubscriptions();
 		this._setupComboboxInput();
 		this._setupComboboxKeyboard();
+
+		// Инициализация DataSource (если передан)
+		if (dataSource) {
+			this._initDataSource(dataSource);
+		}
 	}
 
 	/**
@@ -154,13 +165,26 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 		});
 	}
 
-	/** Инициализация списка */
-	private _initList(): void {
-		this._listElement.className = 'stk-dropdown-list';
-		this.popoverWrapper.appendChild(this._listElement);
+	/** Hook: монтировать список при открытии попапа */
+	protected override _onPopoverOpen(): void {
+		this._mountList();
+	}
 
-		// Делегирование кликов
-		this._listElement.addEventListener('mousedown', (event) => {
+	/** Hook: демонтировать список при закрытии попапа */
+	protected override _onPopoverClose(): void {
+		this._unmountList();
+	}
+
+	// ========================================================================
+	// Приватные методы
+	// ========================================================================
+
+	/** Настроить делегирование кликов (один раз, на popoverWrapper) */
+	private _setupListListeners(): void {
+		this._listElement.className = 'stk-dropdown-list';
+
+		// Делегирование на popoverWrapper — стабильный элемент
+		this.popoverWrapper.addEventListener('mousedown', (event) => {
 			event.preventDefault();
 
 			const target = (event.target as HTMLElement).closest<HTMLElement>('.stk-dropdown-item');
@@ -175,8 +199,19 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 				this.close();
 			}
 		});
+	}
 
+	/** Вставить список в DOM и отрендерить */
+	private _mountList(): void {
+		this.popoverWrapper.appendChild(this._listElement);
 		this._renderItems();
+		this._scrollToFocusedItem();
+	}
+
+	/** Удалить список из DOM и очистить содержимое */
+	private _unmountList(): void {
+		this._listElement.innerHTML = '';
+		this._listElement.remove();
 	}
 
 	/** Подписки на состояние, специфичные для Combobox */
@@ -190,24 +225,30 @@ export class ComboboxComponent extends BaseComponent<ComboboxState, ComboboxEven
 			this.emit('filtering', filterText);
 		});
 
-		// При изменении filteredItems → перерендер
+		// При изменении filteredItems → перерендер (только если попап открыт)
 		this._stateManager.subscribe('filteredItems', () => {
-			this._renderItems();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+			}
 		});
 
 		// При изменении selectedItem → обновить input и перерендер
 		this._stateManager.subscribe('selectedItem', (selectedItem) => {
 			this._rootElement.value = selectedItem?.text ?? '';
-			this._renderItems();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+			}
 		});
 
-		// При изменении focusedIndex → перерендер + скролл
+		// При изменении focusedIndex → перерендер + скролл (только если попап открыт)
 		this._stateManager.subscribe('focusedIndex', () => {
-			this._renderItems();
-			this._scrollToFocusedItem();
+			if (this._stateManager.get('opened')) {
+				this._renderItems();
+				this._scrollToFocusedItem();
+			}
 		});
 
-		// При изменении dataItems → перефильтровать и перерендер
+		// При изменении dataItems → перефильтровать
 		this._stateManager.subscribe('dataItems', () => {
 			const filterText = this._stateManager.get('filterText');
 			const items = this._stateManager.get('dataItems');
