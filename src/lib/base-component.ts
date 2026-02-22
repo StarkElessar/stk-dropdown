@@ -31,7 +31,7 @@ export abstract class BaseComponent<
 	private readonly _handleArrowClick = this._onArrowClick.bind(this);
 	private readonly _handleRootFocus = this._onRootFocus.bind(this);
 
-	constructor(props: BaseComponentProps<TState>) {
+	protected constructor(props: BaseComponentProps<TState>) {
 		super();
 		const { selector, state } = props;
 		const element = typeof selector === 'string'
@@ -50,10 +50,6 @@ export abstract class BaseComponent<
 		this._setupEventListeners();
 	}
 
-	// ========================================================================
-	// Публичные геттеры
-	// ========================================================================
-
 	/** Корневой input-элемент */
 	public get root(): HTMLInputElement {
 		return this._rootElement;
@@ -69,38 +65,35 @@ export abstract class BaseComponent<
 		return this._popoverElement;
 	}
 
-	// ========================================================================
-	// Публичные методы
-	// ========================================================================
-
 	/** Открыть попап */
 	public open(): void {
-		if (this._stateManager.get('disabled' as keyof TState)) return;
-		this._stateManager.set('opened' as keyof TState, true as TState[keyof TState]);
+		if (this._stateManager.get('disabled')) return;
+		this._stateManager.set('opened', true);
 	}
 
 	/** Закрыть попап */
 	public close(): void {
-		this._stateManager.set('opened' as keyof TState, false as TState[keyof TState]);
+		this._stateManager.set('opened', false);
 	}
 
 	/** Переключить видимость попапа */
 	public toggle(): void {
-		if (this._stateManager.get('opened' as keyof TState)) {
+		if (this._stateManager.get('opened')) {
 			this.close();
-		} else {
+		}
+		else {
 			this.open();
 		}
 	}
 
 	/** Заблокировать компонент */
 	public disable(): void {
-		this._stateManager.set('disabled' as keyof TState, true as TState[keyof TState]);
+		this._stateManager.set('disabled', true);
 	}
 
 	/** Разблокировать компонент */
 	public enable(): void {
-		this._stateManager.set('disabled' as keyof TState, false as TState[keyof TState]);
+		this._stateManager.set('disabled', false);
 	}
 
 	/** Уничтожить компонент: снять обработчики, восстановить DOM */
@@ -113,33 +106,25 @@ export abstract class BaseComponent<
 		document.removeEventListener('mousedown', this._handleDocumentMouseDown);
 
 		// Снять обработчики с элементов
-		this._rootElement.removeEventListener('keydown', this._handleRootKeyDown);
-		this._rootElement.removeEventListener('focus', this._handleRootFocus);
+		this.root.removeEventListener('keydown', this._handleRootKeyDown);
+		this.root.removeEventListener('focus', this._handleRootFocus);
 		this._arrowButton.removeEventListener('mousedown', this._handleArrowClick);
 
 		// Восстановить DOM: вынуть input из wrapper, убрать wrapper
-		this._wrapperElement.before(this._rootElement);
-		this._wrapperElement.remove();
+		this.wrapper.before(this.root);
+		this.wrapper.remove();
 
 		// Убрать попап
-		this._popoverElement.remove();
+		this.popoverWrapper.remove();
 	}
-
-	// ========================================================================
-	// Абстрактные методы — обязательны к реализации в подклассах
-	// ========================================================================
 
 	/** Рендер содержимого попапа (список элементов) */
 	protected abstract _renderItems(): void;
 
-	// ========================================================================
-	// Приватные методы — построение DOM
-	// ========================================================================
-
 	/** Построить DOM-структуру компонента */
 	private _buildDOM(): void {
 		// Wrapper
-		this._wrapperElement.className = 'stk-dropdown-wrapper';
+		this.wrapper.className = 'stk-dropdown-wrapper';
 
 		// Arrow button
 		this._arrowButton.className = 'stk-dropdown-arrow';
@@ -148,18 +133,18 @@ export abstract class BaseComponent<
 		this._arrowButton.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 
 		// Input
-		this._rootElement.setAttribute('autocomplete', 'off');
-		this._rootElement.classList.add('stk-dropdown-input');
+		this.root.setAttribute('autocomplete', 'off');
+		this.root.classList.add('stk-dropdown-input');
 
 		// Собираем: wrapper → [input, arrow]
-		this._rootElement.before(this._wrapperElement);
-		this._wrapperElement.appendChild(this._rootElement);
-		this._wrapperElement.appendChild(this._arrowButton);
+		this.root.before(this.wrapper);
+		this.wrapper.appendChild(this.root);
+		this.wrapper.appendChild(this._arrowButton);
 
 		// Popover
-		this._popoverElement.className = 'stk-dropdown-popover';
+		this.popoverWrapper.className = 'stk-dropdown-popover';
 		const portal = this._getOrCreatePortal();
-		portal.appendChild(this._popoverElement);
+		portal.appendChild(this.popoverWrapper);
 	}
 
 	/** Получить или создать portal-контейнер */
@@ -174,10 +159,6 @@ export abstract class BaseComponent<
 		return portal;
 	}
 
-	// ========================================================================
-	// Приватные методы — подписки на состояние
-	// ========================================================================
-
 	/** Настроить реактивные подписки на состояние */
 	private _setupSubscriptions(): void {
 		// opened → toggle попапа + emit событий
@@ -185,8 +166,8 @@ export abstract class BaseComponent<
 			'opened' as keyof TState,
 			(newVal) => {
 				const isOpened = newVal as boolean;
-				this._popoverElement.style.display = isOpened ? 'block' : 'none';
-				this._wrapperElement.classList.toggle('stk-dropdown-wrapper_opened', isOpened);
+				this.popoverWrapper.style.display = isOpened ? 'block' : 'none';
+				this.wrapper.classList.toggle('stk-dropdown-wrapper_opened', isOpened);
 				this._arrowButton.classList.toggle('stk-dropdown-arrow_opened', isOpened);
 
 				if (isOpened) {
@@ -204,9 +185,9 @@ export abstract class BaseComponent<
 			'disabled' as keyof TState,
 			(newVal) => {
 				const isDisabled = newVal as boolean;
-				this._rootElement.disabled = isDisabled;
+				this.root.disabled = isDisabled;
 				this._arrowButton.disabled = isDisabled;
-				this._wrapperElement.classList.toggle('stk-dropdown-wrapper_disabled', isDisabled);
+				this.wrapper.classList.toggle('stk-dropdown-wrapper_disabled', isDisabled);
 
 				if (isDisabled) {
 					this.close();
@@ -216,37 +197,33 @@ export abstract class BaseComponent<
 		);
 	}
 
-	// ========================================================================
-	// Приватные методы — обработчики событий
-	// ========================================================================
-
 	/** Настроить обработчики DOM-событий */
 	private _setupEventListeners(): void {
 		// Click-outside (mousedown, чтобы успеть до blur)
 		document.addEventListener('mousedown', this._handleDocumentMouseDown);
 
 		// Keyboard на input
-		this._rootElement.addEventListener('keydown', this._handleRootKeyDown);
+		this.root.addEventListener('keydown', this._handleRootKeyDown);
 
 		// Focus на input → открыть попап
-		this._rootElement.addEventListener('focus', this._handleRootFocus);
+		this.root.addEventListener('focus', this._handleRootFocus);
 
 		// Click по стрелке → toggle (mousedown чтобы не потерять focus)
-		this._arrowButton.addEventListener('mousedown', this._handleArrowClick);
+		this.root.addEventListener('mousedown', this._handleArrowClick);
 
 		// autoUpdate — следить за позицией попапа
 		this._cleanupAutoUpdate = autoUpdate(
-			this._wrapperElement,
-			this._popoverElement,
-			() => void this._updatePosition(),
+			this.wrapper,
+			this.popoverWrapper,
+			this._updatePosition,
 		);
 	}
 
 	/** Click-outside: закрыть попап при клике вне компонента */
 	private _onDocumentMouseDown(event: MouseEvent): void {
 		const target = event.target as Node;
-		const isInsideWrapper = this._wrapperElement.contains(target);
-		const isInsidePopover = this._popoverElement.contains(target);
+		const isInsideWrapper = this.wrapper.contains(target);
+		const isInsidePopover = this.popoverWrapper.contains(target);
 
 		if (!isInsideWrapper && !isInsidePopover) {
 			this.close();
@@ -257,7 +234,7 @@ export abstract class BaseComponent<
 	private _onRootKeyDown(event: KeyboardEvent): void {
 		if (event.key === 'Escape') {
 			this.close();
-			this._rootElement.blur();
+			this.root.blur();
 		}
 	}
 
@@ -268,30 +245,29 @@ export abstract class BaseComponent<
 
 	/** Click по кнопке-стрелке → toggle */
 	private _onArrowClick(event: MouseEvent): void {
-		event.preventDefault(); // не терять focus с input
+		// не терять focus с input
+		event.preventDefault();
 		this.toggle();
 	}
 
-	// ========================================================================
-	// Приватные методы — позиционирование
-	// ========================================================================
-
 	/** Обновить позицию попапа через @floating-ui */
-	private async _updatePosition(): Promise<void> {
+	private _updatePosition = async (): Promise<void> => {
 		const { x, y, strategy } = await computePosition(
-			this._wrapperElement,
-			this._popoverElement,
+			this.wrapper,
+			this.popoverWrapper,
 			{
 				strategy: 'fixed',
 				placement: 'bottom-start',
-				middleware: [offset(4), flip()],
+				middleware: [offset(4), flip()]
 			},
 		);
 
-		Object.assign(this._popoverElement.style, {
+		Object.assign(this.popoverWrapper.style, {
 			left: `${x}px`,
 			top: `${y}px`,
 			position: strategy,
+			// сделать ширину попапа равной ширине wrapper-а
+			width: `${this.wrapper.offsetWidth}px`
 		});
 	}
 }

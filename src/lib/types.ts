@@ -1,7 +1,3 @@
-// ============================================================================
-// Общие типы
-// ============================================================================
-
 /** Элемент списка */
 export type DropdownItem = {
 	value: string | number;
@@ -14,10 +10,6 @@ export type FilterStrategy = 'contains' | 'startsWith' | 'none';
 
 /** Режим отображения тегов в multiselect */
 export type TagMode = 'single' | 'multiple';
-
-// ============================================================================
-// Состояния (State)
-// ============================================================================
 
 /** Базовое состояние — общее для всех компонентов */
 export type BaseComponentState = {
@@ -47,10 +39,6 @@ export type MultiselectState = BaseComponentState & {
 	allSelected: boolean;
 	focusedIndex: number;
 };
-
-// ============================================================================
-// Props (конфигурация компонентов)
-// ============================================================================
 
 /** Базовые пропсы — общие для всех компонентов */
 export type BaseComponentProps<TState extends BaseComponentState> = {
@@ -88,10 +76,6 @@ export type MultiselectComponentProps = {
 	tagMode?: TagMode;
 };
 
-// ============================================================================
-// События (Events)
-// ============================================================================
-
 /** Базовые события — общие для всех компонентов */
 export type BaseComponentEvents = {
 	open: void;
@@ -112,10 +96,6 @@ export type ComboboxEvents = DropdownEvents & {
 export type MultiselectEvents = BaseComponentEvents & {
 	change: DropdownItem[];
 };
-
-// ============================================================================
-// Служебные константы
-// ============================================================================
 
 /** Значение элемента "Выбрать все" */
 export const SELECT_ALL_VALUE = -1 as const;

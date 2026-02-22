@@ -1,6 +1,3 @@
-/* ============================================================================
-   CSS Custom Properties — кастомизация
-   ============================================================================ */
 :root {
 	--stk-dropdown-bg: #fff;
 	--stk-dropdown-color: #1f2937;
@@ -21,24 +18,18 @@
 	--stk-dropdown-transition-duration: 150ms;
 }
 
-/* ============================================================================
-   Portal
-   ============================================================================ */
 .stk-dropdown-portal {
 	position: fixed;
 	top: 0;
 	left: 0;
 	z-index: 9999;
 	pointer-events: none;
+
+	& > * {
+		pointer-events: auto;
+	}
 }
 
-.stk-dropdown-portal > * {
-	pointer-events: auto;
-}
-
-/* ============================================================================
-   Wrapper
-   ============================================================================ */
 .stk-dropdown-wrapper {
 	display: inline-flex;
 	align-items: center;
@@ -50,10 +41,10 @@
 	font-size: var(--stk-dropdown-font-size);
 	transition: border-color var(--stk-dropdown-transition-duration) ease;
 	cursor: pointer;
-}
 
-.stk-dropdown-wrapper:hover {
-	border-color: var(--stk-dropdown-border-focus);
+	&:hover {
+		border-color: var(--stk-dropdown-border-focus);
+	}
 }
 
 .stk-dropdown-wrapper_opened {
@@ -67,11 +58,8 @@
 	cursor: default;
 }
 
-/* ============================================================================
-   Input
-   ============================================================================ */
 .stk-dropdown-input {
-	flex: 1;
+	flex-grow: 1;
 	min-width: 0;
 	border: none;
 	outline: none;
@@ -80,15 +68,12 @@
 	color: var(--stk-dropdown-color);
 	padding: 8px 12px;
 	box-sizing: border-box;
+
+	&::placeholder {
+		color: var(--stk-dropdown-item-disabled-color);
+	}
 }
 
-.stk-dropdown-input::placeholder {
-	color: var(--stk-dropdown-item-disabled-color);
-}
-
-/* ============================================================================
-   Arrow button
-   ============================================================================ */
 .stk-dropdown-arrow {
 	display: inline-flex;
 	align-items: center;
@@ -101,20 +86,17 @@
 	color: var(--stk-dropdown-color);
 	cursor: pointer;
 	padding: 0;
-	transition: transform var(--stk-dropdown-transition-duration) ease;
-}
+	transition: transform var(--stk-dropdown-transition-duration) ease-in-out;
 
-.stk-dropdown-arrow:hover {
-	color: var(--stk-dropdown-border-focus);
+	&:hover {
+		color: var(--stk-dropdown-border-focus);
+	}
 }
 
 .stk-dropdown-arrow_opened {
 	transform: rotate(180deg);
 }
 
-/* ============================================================================
-   Popover
-   ============================================================================ */
 .stk-dropdown-popover {
 	box-sizing: border-box;
 	display: none;
@@ -126,30 +108,24 @@
 	z-index: 10000;
 }
 
-/* ============================================================================
-   List
-   ============================================================================ */
 .stk-dropdown-list {
 	list-style: none;
 	margin: 0;
 	padding: 4px 0;
 	max-height: var(--stk-dropdown-popover-max-height);
-	overflow-y: auto;
-	overflow-x: hidden;
+	overflow: hidden auto;
+	overscroll-behavior-y: none;
+
+	&::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--stk-dropdown-border);
+		border-radius: 3px;
+	}
 }
 
-.stk-dropdown-list::-webkit-scrollbar {
-	width: 6px;
-}
-
-.stk-dropdown-list::-webkit-scrollbar-thumb {
-	background: var(--stk-dropdown-border);
-	border-radius: 3px;
-}
-
-/* ============================================================================
-   List Item
-   ============================================================================ */
 .stk-dropdown-item {
 	display: flex;
 	align-items: center;
@@ -162,10 +138,10 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
 
-.stk-dropdown-item:hover {
-	background: var(--stk-dropdown-item-hover);
+	&:hover {
+		background: var(--stk-dropdown-item-hover);
+	}
 }
 
 .stk-dropdown-item_focused {
@@ -184,9 +160,6 @@
 	pointer-events: none;
 }
 
-/* ============================================================================
-   No Results
-   ============================================================================ */
 .stk-dropdown-no-results {
 	padding: 12px;
 	text-align: center;

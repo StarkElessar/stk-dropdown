@@ -1,6 +1,6 @@
 import './dropdown-component.css';
-import { BaseComponent } from './base-component.ts';
-import type { DropdownComponentProps, DropdownEvents, DropdownItem, DropdownState } from './types.ts';
+import { BaseComponent } from './base-component';
+import type { DropdownComponentProps, DropdownEvents, DropdownItem, DropdownState } from './types';
 
 /**
  * DropdownComponent — компонент выпадающего списка с одиночным выбором.
@@ -58,10 +58,6 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 		this._setupDropdownKeyboard();
 	}
 
-	// ========================================================================
-	// Публичные методы
-	// ========================================================================
-
 	/**
 	 * Геттер/сеттер текущего выбранного значения.
 	 * - Без аргументов: возвращает выбранный элемент или null.
@@ -90,15 +86,11 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 		this._stateManager.set('dataItems', [...items]);
 
 		const currentSelected = this._stateManager.get('selectedItem');
-		if (currentSelected && !items.some((i) => i.value === currentSelected.value)) {
+		if (currentSelected && !items.some(x => x.value === currentSelected.value)) {
 			this._stateManager.set('selectedItem', null);
-			this._rootElement.value = '';
+			this.root.value = '';
 		}
 	}
-
-	// ========================================================================
-	// Реализация абстрактного метода
-	// ========================================================================
 
 	/** Рендер списка элементов внутри попапа */
 	protected _renderItems(): void {
@@ -141,18 +133,20 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 
 		// Делегирование кликов на элементы списка
 		this._listElement.addEventListener('mousedown', (event) => {
-			event.preventDefault(); // не терять focus с input
+			// не терять focus с input
+			event.preventDefault();
 
 			const target = (event.target as HTMLElement).closest<HTMLElement>('.stk-dropdown-item');
-			if (!target || target.classList.contains('stk-dropdown-item_disabled')) return;
 
-			const index = Number(target.dataset.index);
-			const items = this._stateManager.get('dataItems');
-			const item = items[index];
+			if (target?.classList.contains('stk-dropdown-item_disabled')) {
+				const index = Number(target.dataset.index);
+				const items = this._stateManager.get('dataItems');
+				const item = items[index];
 
-			if (item) {
-				this._selectItem(item);
-				this.close();
+				if (item) {
+					this._selectItem(item);
+					this.close();
+				}
 			}
 		});
 
@@ -184,7 +178,7 @@ export class DropdownComponent extends BaseComponent<DropdownState, DropdownEven
 	private _setupDropdownKeyboard(): void {
 		this._rootElement.addEventListener('keydown', (event) => {
 			const items = this._stateManager.get('dataItems');
-			const enabledItems = items.filter((i) => !i.disabled);
+			const enabledItems = items.filter(x => !x.disabled);
 			if (enabledItems.length === 0) return;
 
 			const currentFocusedIndex = this._stateManager.get('focusedIndex');
