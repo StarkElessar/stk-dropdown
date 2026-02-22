@@ -97,6 +97,7 @@ describe('MultiselectComponent', () => {
 				items: ITEMS,
 			});
 
+			ms.open();
 			const listItems = ms.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			expect(listItems.length).toBe(ITEMS.length);
 
@@ -113,6 +114,7 @@ describe('MultiselectComponent', () => {
 				showSelectAll: true,
 			});
 
+			ms.open();
 			const selectAll = ms.popoverWrapper.querySelector('.stk-multiselect-item_select-all');
 			expect(selectAll).toBeTruthy();
 		});
@@ -123,6 +125,7 @@ describe('MultiselectComponent', () => {
 				items: ITEMS,
 			});
 
+			ms.open();
 			const selectAll = ms.popoverWrapper.querySelector('.stk-multiselect-item_select-all');
 			expect(selectAll).toBeNull();
 		});
@@ -133,6 +136,7 @@ describe('MultiselectComponent', () => {
 				items: ITEMS,
 			});
 
+			ms.open();
 			const listItems = ms.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			// "Чёрный" — index 3 — disabled
 			expect(listItems[3].classList.contains('stk-dropdown-item_disabled')).toBe(true);
@@ -286,6 +290,7 @@ describe('MultiselectComponent', () => {
 			expect(selected.length).toBe(1);
 			expect(selected[0].value).toBe('red');
 
+			ms.open();
 			const listItems = ms.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			expect(listItems.length).toBe(2);
 		});

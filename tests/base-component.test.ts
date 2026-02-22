@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BaseComponent } from '../src/lib/base-component';
-import type { BaseComponentEvents, BaseComponentProps, BaseComponentState } from '../src/lib/types';
+import type { BaseComponentEvents, BaseComponentProps, BaseComponentState, DropdownItem } from '../src/lib/types';
 
 // Конкретная реализация для тестов (BaseComponent — абстрактный)
 class TestComponent extends BaseComponent<BaseComponentState, BaseComponentEvents> {
@@ -8,6 +8,10 @@ class TestComponent extends BaseComponent<BaseComponentState, BaseComponentEvent
 
 	constructor(props: BaseComponentProps<BaseComponentState>) {
 		super(props);
+	}
+
+	public setItems(_items: DropdownItem[]): void {
+		// заглушка
 	}
 
 	protected _renderItems(): void {
@@ -334,6 +338,53 @@ describe('BaseComponent', () => {
 			component.popoverWrapper.dispatchEvent(event);
 
 			expect(component.popoverWrapper.style.display).toBe('block');
+		});
+	});
+
+	// ========================================================================
+	// Arrow button
+	// ========================================================================
+	describe('arrow button', () => {
+		it('mousedown на кнопке-стрелке должен открывать попап', () => {
+			const component = new TestComponent({
+				selector: input,
+				state: { opened: false, disabled: false },
+			});
+
+			const arrowBtn = component.wrapper.querySelector<HTMLElement>('.stk-dropdown-arrow')!;
+			expect(arrowBtn).toBeTruthy();
+
+			const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+			arrowBtn.dispatchEvent(event);
+
+			expect(component.popoverWrapper.style.display).toBe('block');
+		});
+
+		it('второй mousedown на стрелке должен закрывать попап (toggle)', () => {
+			const component = new TestComponent({
+				selector: input,
+				state: { opened: false, disabled: false },
+			});
+
+			const arrowBtn = component.wrapper.querySelector<HTMLElement>('.stk-dropdown-arrow')!;
+
+			arrowBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+			expect(component.popoverWrapper.style.display).toBe('block');
+
+			arrowBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+			expect(component.popoverWrapper.style.display).toBe('none');
+		});
+
+		it('mousedown на стрелке не должен работать если disabled', () => {
+			const component = new TestComponent({
+				selector: input,
+				state: { opened: false, disabled: true },
+			});
+
+			const arrowBtn = component.wrapper.querySelector<HTMLElement>('.stk-dropdown-arrow')!;
+			arrowBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+
+			expect(component.popoverWrapper.style.display).toBe('none');
 		});
 	});
 

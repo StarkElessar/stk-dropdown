@@ -94,6 +94,7 @@ describe('DropdownComponent', () => {
 				items: ITEMS,
 			});
 
+			dropdown.open();
 			const listItems = dropdown.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			expect(listItems.length).toBe(ITEMS.length);
 		});
@@ -104,6 +105,7 @@ describe('DropdownComponent', () => {
 				items: ITEMS,
 			});
 
+			dropdown.open();
 			const listItems = dropdown.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			// 4-й элемент (index 3) — disabled
 			expect(listItems[3].classList.contains('stk-dropdown-item_disabled')).toBe(true);
@@ -116,6 +118,7 @@ describe('DropdownComponent', () => {
 				value: 1,
 			});
 
+			dropdown.open();
 			const listItems = dropdown.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			expect(listItems[0].classList.contains('stk-dropdown-item_selected')).toBe(true);
 		});
@@ -191,6 +194,7 @@ describe('DropdownComponent', () => {
 			];
 
 			dropdown.setItems(newItems);
+			dropdown.open();
 
 			const listItems = dropdown.popoverWrapper.querySelectorAll('.stk-dropdown-item');
 			expect(listItems.length).toBe(2);
@@ -327,6 +331,68 @@ describe('DropdownComponent', () => {
 
 			expect(handler).toHaveBeenCalledWith({ value: 1, text: 'Яблоко' });
 			expect(input.value).toBe('Яблоко');
+		});
+
+		it('mousedown на элементе списка должен выбирать его', () => {
+			const dropdown = new DropdownComponent({
+				selector: input,
+				items: ITEMS,
+			});
+			const handler = vi.fn();
+			dropdown.on('change', handler);
+
+			dropdown.open();
+
+			const listItems = dropdown.popoverWrapper.querySelectorAll<HTMLElement>('.stk-dropdown-item');
+			// Кликаем по "Апельсин" (index 1)
+			listItems[1].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+
+			expect(handler).toHaveBeenCalledWith({ value: 2, text: 'Апельсин' });
+			expect(input.value).toBe('Апельсин');
+			// Попап должен закрыться
+			expect(dropdown.popoverWrapper.style.display).toBe('none');
+		});
+
+		it('mousedown на disabled элементе НЕ должен выбирать его', () => {
+			const dropdown = new DropdownComponent({
+				selector: input,
+				items: ITEMS,
+			});
+			const handler = vi.fn();
+			dropdown.on('change', handler);
+
+			dropdown.open();
+
+			const listItems = dropdown.popoverWrapper.querySelectorAll<HTMLElement>('.stk-dropdown-item');
+			// Виноград (index 3) — disabled
+			listItems[3].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+
+			expect(handler).not.toHaveBeenCalled();
+			expect(dropdown.value()).toBeNull();
+		});
+
+		it('повторный клик на input после выбора элемента должен снова открывать попап', () => {
+			// Регрессионный тест: после выбора фокус остаётся на input,
+			// поэтому focus-событие не повторяется — должен работать mousedown.
+			const dropdown = new DropdownComponent({
+				selector: input,
+				items: ITEMS,
+			});
+
+			// Открываем и выбираем элемент
+			dropdown.open();
+			const listItems = dropdown.popoverWrapper.querySelectorAll<HTMLElement>('.stk-dropdown-item');
+			listItems[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+
+			// Попап закрылся после выбора
+			expect(dropdown.popoverWrapper.style.display).toBe('none');
+			expect(dropdown.value()?.text).toBe('Яблоко');
+
+			// Клик на input снова — фокус уже есть, поэтому нужен mousedown
+			input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+
+			// Попап должен открыться снова
+			expect(dropdown.popoverWrapper.style.display).toBe('block');
 		});
 	});
 });
